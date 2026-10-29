@@ -1,31 +1,67 @@
-# StudyHub
+# ✦ StudyHub
 
-Minha pequena "Startup": um aplicativo de estudos focado em pessoas que estão se preparando para vestibulares, estudantes do ensino médio e quem quer relembrar conteúdos e manter o cérebro em atividade.
+[![CI](https://github.com/JNoronha01/StudyHub/actions/workflows/ci.yml/badge.svg)](https://github.com/JNoronha01/StudyHub/actions/workflows/ci.yml)
+
+Plataforma de estudos para o **ENEM e vestibulares**: aulas objetivas das 12 matérias, simulados com nota estimada no estilo da TRI, caderno de erros com revisão espaçada, flashcards, plano de estudos até a prova e um módulo completo de **redação nota 1000**, com correção por IA.
+
+## Funcionalidades
+
+| | |
+|---|---|
+| 📚 **Central de estudos** | 56 tópicos com teoria, exemplos resolvidos, resumo, erros comuns, fórmulas (LaTeX) e ~250 exercícios comentados |
+| 📝 **Simulado ENEM** | Por área, com cronômetro de 3 min/questão, nota estimada (300–1000) que pune respostas incoerentes como a TRI, desempenho por matéria e histórico |
+| 🔁 **Caderno de erros** | Todo erro volta em 1, 3, 7 e 15 dias até ser dominado (revisão espaçada) |
+| ✍️ **Redação** | 8 aulas, redação-modelo comentada, banco de repertórios por eixo, temas oficiais 2014–2024, conectivos e editor com análise instantânea dos 5 elementos da proposta |
+| ✦ **Tutor com IA** | "Explica de novo" nas questões e correção de redação por competência (Claude, via Supabase Edge Function) |
+| 📅 **Plano de estudos** | Cronograma semanal até a data da prova, priorizando o que mais cai |
+| 🃏 **Flashcards** | Cartões com virada 3D a partir das fórmulas e exercícios |
+| 🏆 **Gamificação** | XP, níveis, sequência de dias e 10 medalhas |
+
+## Stack
+
+React 18 + TypeScript + Vite · Tailwind CSS · Supabase (Auth, Postgres com RLS, Edge Functions) · KaTeX · Vitest · GitHub Actions · Vercel
 
 ## Começar localmente
 
 1. `npm install`
-2. Crie um projeto no Supabase, rode `supabase-schema.sql` no SQL Editor e copie `.env.example` para `.env` com URL e chave anon.
-3. Execute `npm run dev`.
+2. Crie um projeto no Supabase, rode `supabase-schema.sql` no SQL Editor e copie `.env.example` para `.env` com a URL e a chave anon.
+3. `npm run dev`
 
-Sem `.env`, o caderno usa `localStorage` e um aviso aparece na tela. O progresso, favoritos e respostas também ficam salvos no navegador enquanto a sincronização com o Supabase não for implementada.
+Use a URL de **Supabase > Project Settings > API > Project URL** (formato `https://abcdefghijklmnop.supabase.co`, sem `/rest/v1/` no final). O app exige login: `/login` é a única rota pública.
 
-Com `.env` e usuário autenticado, progresso, favoritos, notas e respostas dos exercícios são sincronizados no Supabase. Pessoas sem login continuam podendo testar o app localmente no navegador.
+### Scripts
 
-Use a URL real exibida em **Supabase > Project Settings > API > Project URL**. Ela terá um formato parecido com `https://abcdefghijklmnop.supabase.co`; não inclua `/rest/v1/`, `/auth/v1/` ou `/dashboard/` no final.
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm test` | Testes (validação de todo o conteúdo + regras de pontuação, revisão e plano) |
+| `npm run build` | Typecheck + build de produção |
 
-O app exige login para acessar a área de estudos. `/login` é a única rota pública; qualquer tentativa de abrir estudos, notas ou calculadora sem sessão redireciona para o login e retorna à rota original depois da autenticação.
+### Tutor com IA (opcional)
+
+A chave da Anthropic fica só no servidor, nunca no navegador. Com a [CLI do Supabase](https://supabase.com/docs/guides/cli):
+
+```bash
+supabase secrets set ANTHROPIC_API_KEY=sua-chave
+supabase functions deploy tutor
+```
+
+O plano gratuito tem 3 correções de redação e 30 explicações por mês (tabela `ai_usage`); os limites ficam em `supabase/functions/tutor/index.ts`.
 
 ### Contas de teste
 
-Depois de executar o schema, vá em **Authentication > Providers > Email** no Supabase. Para um teste fechado do MVP, você pode desativar **Confirm email**, assim os convidados conseguem criar a conta e entrar imediatamente. Se deixar ativado, eles precisam clicar no link enviado por e-mail. Em **Authentication > URL Configuration**, cadastre a URL local e a URL da Vercel.
+Em **Authentication > Providers > Email**, desative **Confirm email** para um teste fechado. Em **Authentication > URL Configuration**, cadastre a URL local e a da Vercel.
 
-## Central de Estudos
+## Conteúdo
 
-Os conteúdos ficam em `src/content/topics.ts`, organizados em Aprender, Resumo, Fórmulas e Exercícios. Use `$...$` para fórmulas no texto. O catálogo de fórmulas fica em `src/content/formulas.ts`.
+- Tópicos: `src/content/topics/`, um arquivo por matéria. Use `$...$` para fórmulas.
+- Redação: `src/content/redacao.ts`.
+- Fórmulas: `src/content/formulas.ts`.
+
+Todo conteúdo é validado por `src/content/content.test.ts` (gabaritos, LaTeX, ids e cobertura das matérias).
 
 ## Publicar na Vercel
 
-1. Envie o projeto ao GitHub e importe o repositório na Vercel (preset Vite; `vercel.json` define build e rotas).
+1. Importe o repositório na Vercel (preset Vite; `vercel.json` define build e rotas).
 2. Em **Settings > Environment Variables**, defina `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. A chave `anon` é pública por desenho; a segurança vem do RLS.
-3. No Supabase, em **Authentication > URL Configuration**, cadastre o domínio da Vercel.
+3. No Supabase, cadastre o domínio da Vercel em **Authentication > URL Configuration**.
