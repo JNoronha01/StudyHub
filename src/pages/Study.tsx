@@ -38,11 +38,13 @@ export function TopicPage() {
   const { id } = useParams(); const t = topics.find(x => x.id === id); const [tab, setTab] = useState<typeof tabs[number]>('Aprender'); const p = useProgress()
   if (!t) return <p>Conteúdo não encontrado. <Link className="text-brand" to="/estudos">Voltar à Central de Estudos</Link></p>
   const ans = p.answers[t.id] ?? {}; const hits = t.quiz.filter((q, i) => ans[i] === q.answer).length
+  // Tópicos de Humanas não têm fórmulas: esconde a aba em vez de mostrá-la vazia.
+  const visibleTabs = tabs.filter(x => x !== 'Fórmulas' || t.formulas.length > 0)
   return <article className="space-y-3 max-w-3xl"><Link className="text-brand text-sm" to="/estudos">← Central de Estudos</Link>
     <div className="text-brand text-sm">{t.subject} · {t.area} · {t.level}</div><h1 className="text-2xl font-bold">{t.title}</h1>
     <div className="flex flex-wrap gap-2"><button aria-pressed={!!p.done[t.id]} onClick={() => p.toggleDone(t.id)} className={chip(!!p.done[t.id])}>{p.done[t.id] ? '✓ Estudado' : 'Marcar como estudado'}</button>
       <button aria-pressed={!!p.fav[t.id]} onClick={() => p.toggleFav(t.id)} className={chip(!!p.fav[t.id])}>{p.fav[t.id] ? '★ Favorito' : '☆ Favoritar'}</button></div>
-    <div role="tablist" className="flex gap-2 border-b border-line pb-2">{tabs.map(x => <button key={x} role="tab" aria-selected={tab === x} onClick={() => setTab(x)} className={chip(tab === x)}>{x}</button>)}</div>
+    <div role="tablist" className="flex gap-2 border-b border-line pb-2">{visibleTabs.map(x => <button key={x} role="tab" aria-selected={tab === x} onClick={() => setTab(x)} className={chip(tab === x)}>{x}</button>)}</div>
     {tab === 'Aprender' && <div className="space-y-4">{t.learn.map(b => <section key={b.h}><h2 className="font-bold mb-1">{b.h.includes('$') ? <Rich t={b.h} /> : b.h}</h2>{b.p.map((x, i) => <p key={i} className="text-slate-300 mb-2"><Rich t={x} /></p>)}</section>)}
       <h2 className="font-bold">Exemplos resolvidos</h2>{t.examples.map((e, i) => <div key={i} className="bg-card border border-line rounded p-3"><p><b>{i + 1}.</b> <Rich t={e.q} /></p><ol className="list-decimal pl-6 text-slate-300 mt-1">{e.steps.map((s, j) => <li key={j}><Rich t={s} /></li>)}</ol></div>)}</div>}
     {tab === 'Resumo' && <div className="space-y-3"><ul className="list-disc pl-5 space-y-1">{t.summary.map((s, i) => <li key={i}><Rich t={s} /></li>)}</ul>
@@ -51,7 +53,7 @@ export function TopicPage() {
       <Link className="text-brand text-sm" to={`/estudos?modo=formulas&q=${encodeURIComponent(t.area)}`}>Ver mais fórmulas de {t.area} →</Link></div>}
     {tab === 'Exercícios' && <div className="space-y-3"><p className="text-slate-400 text-sm">Acertos: {hits} de {t.quiz.length} · respondidas: {Object.keys(ans).length}. Suas respostas ficam salvas neste navegador.</p>
       {t.quiz.map((q, i) => <div key={i} className="bg-card border border-line rounded p-3"><p><b>{i + 1}.</b> <Rich t={q.q} /></p>
-        {q.options.map((o, j) => <button key={j} disabled={ans[i] !== undefined} onClick={() => p.answer(t.id, i, j, j === q.answer)} className={`block w-full text-left border rounded px-2 py-1 my-1 ${ans[i] === undefined ? 'border-line hover:border-brand' : j === q.answer ? 'border-green-500' : ans[i] === j ? 'border-red-500' : 'border-line'}`}>{o}</button>)}
+        {q.options.map((o, j) => <button key={j} disabled={ans[i] !== undefined} onClick={() => p.answer(t.id, i, j, j === q.answer)} className={`block w-full text-left border rounded px-2 py-1 my-1 ${ans[i] === undefined ? 'border-line hover:border-brand' : j === q.answer ? 'border-green-500' : ans[i] === j ? 'border-red-500' : 'border-line'}`}><Rich t={o} /></button>)}
         {ans[i] !== undefined && <p className="mt-1"><b>{ans[i] === q.answer ? 'Correto. ' : 'Incorreto. '}</b><Rich t={q.why} /></p>}</div>)}
       {Object.keys(ans).length > 0 && <button onClick={() => p.resetAnswers(t.id)} className={chip(false)}>Refazer exercícios</button>}</div>}
   </article>
