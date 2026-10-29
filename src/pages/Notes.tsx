@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useNotes } from '../lib/useNotes'
 import { hasSupabase } from '../lib/supabase'
+import { useAuth } from '../lib/useAuth'
 export default function Notes() {
+  const { user } = useAuth()
   const { notes, loading, error, add, update, remove } = useNotes(); const [sel, setSel] = useState<string>(''); const [q, setQ] = useState('')
   const list = notes.filter(n => (n.title + n.body).toLowerCase().includes(q.toLowerCase())).sort((a, b) => Number(b.pinned) - Number(a.pinned))
   const n = notes.find(x => x.id === sel) ?? list[0]
   return <div className="grid md:grid-cols-[260px_1fr] gap-4">
     <div><h1 className="text-2xl font-bold">Caderno</h1>
       {!hasSupabase && <p className="text-amber-400 text-sm my-2">Supabase não configurado: notas salvas só neste navegador.</p>}
+      {hasSupabase && !user && <p className="text-amber-400 text-sm my-2">Você está no modo visitante. Entre na conta para sincronizar suas notas.</p>}
       {error && <p role="alert" className="text-red-400 text-sm">{error}</p>}
       <button onClick={add} className="bg-brand rounded px-3 py-1 my-2">+ Nova nota</button>
       <input aria-label="Buscar" placeholder="Buscar" value={q} onChange={e => setQ(e.target.value)} className="w-full bg-card border border-line rounded px-2 py-1 mb-2" />

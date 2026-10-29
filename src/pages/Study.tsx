@@ -51,7 +51,7 @@ export function TopicPage() {
       <Link className="text-brand text-sm" to={`/estudos?modo=formulas&q=${encodeURIComponent(t.area)}`}>Ver mais fórmulas de {t.area} →</Link></div>}
     {tab === 'Exercícios' && <div className="space-y-3"><p className="text-slate-400 text-sm">Acertos: {hits} de {t.quiz.length} · respondidas: {Object.keys(ans).length}. Suas respostas ficam salvas neste navegador.</p>
       {t.quiz.map((q, i) => <div key={i} className="bg-card border border-line rounded p-3"><p><b>{i + 1}.</b> <Rich t={q.q} /></p>
-        {q.options.map((o, j) => <button key={j} disabled={ans[i] !== undefined} onClick={() => p.answer(t.id, i, j)} className={`block w-full text-left border rounded px-2 py-1 my-1 ${ans[i] === undefined ? 'border-line hover:border-brand' : j === q.answer ? 'border-green-500' : ans[i] === j ? 'border-red-500' : 'border-line'}`}>{o}</button>)}
+        {q.options.map((o, j) => <button key={j} disabled={ans[i] !== undefined} onClick={() => p.answer(t.id, i, j, j === q.answer)} className={`block w-full text-left border rounded px-2 py-1 my-1 ${ans[i] === undefined ? 'border-line hover:border-brand' : j === q.answer ? 'border-green-500' : ans[i] === j ? 'border-red-500' : 'border-line'}`}>{o}</button>)}
         {ans[i] !== undefined && <p className="mt-1"><b>{ans[i] === q.answer ? 'Correto. ' : 'Incorreto. '}</b><Rich t={q.why} /></p>}</div>)}
       {Object.keys(ans).length > 0 && <button onClick={() => p.resetAnswers(t.id)} className={chip(false)}>Refazer exercícios</button>}</div>}
   </article>

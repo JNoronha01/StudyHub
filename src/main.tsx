@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Navigate, NavLink, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import './index.css'
 import 'katex/dist/katex.min.css'
 import { Study, TopicPage } from './pages/Study'
@@ -9,6 +9,8 @@ import { topics } from './content/topics'
 import Calculator from './pages/Calculator'
 import Notes from './pages/Notes'
 import Login from './pages/Login'
+import { useAuth } from './lib/useAuth'
+import { supabase } from './lib/supabase'
 
 const links = [
   { to: '/', label: 'Visão geral', icon: '⌂' },
@@ -62,6 +64,14 @@ function Home() {
 
 function OldTopic() { const { id } = useParams(); return <Navigate to={`/estudos/${id}`} replace /> }
 
+function RequireAuth() {
+  const { user, loading } = useAuth()
+  const location = useLocation()
+  if (loading) return <div className="p-6 text-slate-400">Verificando sua conta...</div>
+  if (!supabase || !user) return <Navigate to="/login" replace state={{ from: location }} />
+  return <Outlet />
+}
+
 function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
@@ -77,7 +87,12 @@ function AppShell() {
       <NavLink to="/login" onClick={closeMenu} className={`nav-item account-link ${location.pathname === '/login' ? 'active' : ''}`}><span className="avatar">ES</span><span><b>Minha conta</b><small>Plano gratuito</small></span><span className="account-arrow">›</span></NavLink>
     </aside>
     {mobileOpen && <button className="sidebar-overlay" onClick={closeMenu} aria-label="Fechar menu" />}
-    <main className="main-content"><header className="topbar"><div className="breadcrumb">StudyHub <span>/</span> <b>{links.find(link => link.to === location.pathname)?.label ?? 'Estudos'}</b></div><div className="topbar-actions"><button aria-label="Notificações" className="icon-button">♢<i /></button><NavLink to="/login" className="top-avatar">ES</NavLink></div></header><Routes><Route path="/" element={<Home />} /><Route path="/estudos" element={<Study />} /><Route path="/estudos/:id" element={<TopicPage />} /><Route path="/biblioteca" element={<Navigate to="/estudos" replace />} /><Route path="/biblioteca/:id" element={<OldTopic />} /><Route path="/formulas" element={<Navigate to="/estudos?modo=formulas" replace />} /><Route path="/calculadora" element={<Calculator />} /><Route path="/notas" element={<Notes />} /><Route path="/login" element={<Login />} /></Routes></main>
+    <main className="main-content"><header className="topbar"><div className="breadcrumb">StudyHub <span>/</span> <b>{links.find(link => link.to === location.pathname)?.label ?? 'Estudos'}</b></div><div className="topbar-actions"><button aria-label="Notificações" className="icon-button">♢<i /></button><NavLink to="/login" className="top-avatar">ES</NavLink></div></header><Routes>
+      <Route path="/login" element={<Login />} />
+      <Route element={<RequireAuth />}>
+        <Route path="/" element={<Home />} /><Route path="/estudos" element={<Study />} /><Route path="/estudos/:id" element={<TopicPage />} /><Route path="/biblioteca" element={<Navigate to="/estudos" replace />} /><Route path="/biblioteca/:id" element={<OldTopic />} /><Route path="/formulas" element={<Navigate to="/estudos?modo=formulas" replace />} /><Route path="/calculadora" element={<Calculator />} /><Route path="/notas" element={<Notes />} />
+      </Route>
+    </Routes></main>
   </div>
 }
 
