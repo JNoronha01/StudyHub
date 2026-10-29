@@ -21,6 +21,8 @@ const links = [
 
 function Home() {
   const p = useProgress()
+  const { user } = useAuth()
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'estudante'
   const done = topics.filter(t => p.done[t.id]).length
   const favs = topics.filter(t => p.fav[t.id]).length
   const answered = Object.values(p.answers).reduce((n, a) => n + Object.keys(a).length, 0)
@@ -39,7 +41,7 @@ function Home() {
     </section>
 
     <section className="welcome-row">
-      <div><p className="eyebrow">BOM TE VER POR AQUI</p><h2>Olá, estudante 👋</h2><p className="muted">Que tal avançar um pouco hoje?</p></div>
+      <div><p className="eyebrow">BOM TE VER POR AQUI</p><h2>Olá, {displayName} 👋</h2><p className="muted">Que tal avançar um pouco hoje?</p></div>
       <div className="study-streak"><span>✦</span><div><strong>7 dias</strong><small>de sequência</small></div></div>
     </section>
 
@@ -75,6 +77,9 @@ function RequireAuth() {
 function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
+  const { user } = useAuth()
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Minha conta'
+  const initials = displayName.slice(0, 2).toUpperCase()
   const closeMenu = () => setMobileOpen(false)
   return <div className="app-shell">
     <button className="mobile-menu-button" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Abrir menu">☰</button>
@@ -84,10 +89,10 @@ function AppShell() {
       <nav className="sidebar-nav">{links.map(link => <NavLink key={link.to} to={link.to} end={link.to === '/'} onClick={closeMenu} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><span className="nav-icon">{link.icon}</span>{link.label}</NavLink>)}</nav>
       <div className="sidebar-spacer" />
       <div className="upgrade-card"><span className="upgrade-star">✦</span><strong>Desbloqueie seu potencial</strong><p>Tenha acesso a recursos para estudar ainda melhor.</p><NavLink to="/login" onClick={closeMenu}>Conhecer recursos <span>→</span></NavLink></div>
-      <NavLink to="/login" onClick={closeMenu} className={`nav-item account-link ${location.pathname === '/login' ? 'active' : ''}`}><span className="avatar">ES</span><span><b>Minha conta</b><small>Plano gratuito</small></span><span className="account-arrow">›</span></NavLink>
+      <NavLink to="/login" onClick={closeMenu} className={`nav-item account-link ${location.pathname === '/login' ? 'active' : ''}`}><span className="avatar">{initials}</span><span><b>{displayName}</b><small>Plano gratuito</small></span><span className="account-arrow">›</span></NavLink>
     </aside>
     {mobileOpen && <button className="sidebar-overlay" onClick={closeMenu} aria-label="Fechar menu" />}
-    <main className="main-content"><header className="topbar"><div className="breadcrumb">StudyHub <span>/</span> <b>{links.find(link => link.to === location.pathname)?.label ?? 'Estudos'}</b></div><div className="topbar-actions"><button aria-label="Notificações" className="icon-button">♢<i /></button><NavLink to="/login" className="top-avatar">ES</NavLink></div></header><Routes>
+    <main className="main-content"><header className="topbar"><div className="breadcrumb">StudyHub <span>/</span> <b>{links.find(link => link.to === location.pathname)?.label ?? 'Estudos'}</b></div><div className="topbar-actions"><button aria-label="Notificações" className="icon-button">♢<i /></button><NavLink to="/login" className="top-avatar">{initials}</NavLink></div></header><Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<RequireAuth />}>
         <Route path="/" element={<Home />} /><Route path="/estudos" element={<Study />} /><Route path="/estudos/:id" element={<TopicPage />} /><Route path="/biblioteca" element={<Navigate to="/estudos" replace />} /><Route path="/biblioteca/:id" element={<OldTopic />} /><Route path="/formulas" element={<Navigate to="/estudos?modo=formulas" replace />} /><Route path="/calculadora" element={<Calculator />} /><Route path="/notas" element={<Notes />} />

@@ -12,7 +12,7 @@ Sem `.env`, o caderno usa `localStorage` e um aviso aparece na tela. O progresso
 
 Com `.env` e usuário autenticado, progresso, favoritos, notas e respostas dos exercícios são sincronizados no Supabase. Pessoas sem login continuam podendo testar o app localmente no navegador.
 
-Use a URL real exibida em **Supabase > Project Settings > API > Project URL**. Ela terá um formato parecido com `https://abcdefghijklmnop.supabase.co`; não use `https://studyhub.supabase.co` como exemplo literal.
+Use a URL real exibida em **Supabase > Project Settings > API > Project URL**. Ela terá um formato parecido com `https://abcdefghijklmnop.supabase.co`; não inclua `/rest/v1/`, `/auth/v1/` ou `/dashboard/` no final.
 
 O app exige login para acessar a área de estudos. `/login` é a única rota pública; qualquer tentativa de abrir estudos, notas ou calculadora sem sessão redireciona para o login e retorna à rota original depois da autenticação.
 

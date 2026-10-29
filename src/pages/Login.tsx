@@ -13,11 +13,13 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
-  const destination = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/'
+  const destination = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from
 
   useEffect(() => {
-    if (user && !loading && location.pathname === '/login') navigate(destination, { replace: true })
-  }, [destination, loading, location.pathname, navigate, user])
+    if (user && !loading && destination) {
+      navigate(`${destination.pathname ?? '/'}${destination.search ?? ''}${destination.hash ?? ''}`, { replace: true, state: null })
+    }
+  }, [destination, loading, navigate, user])
 
   if (user && !loading) {
     return <div className="max-w-md space-y-4"><p className="eyebrow">CONTA ATIVA</p><h1 className="text-2xl font-bold">Olá, {user.user_metadata?.display_name || user.email?.split('@')[0]} 👋</h1><p className="text-slate-400">Seus favoritos, progresso e notas ficam associados a esta conta.</p><button onClick={() => signOut()} className="bg-brand rounded px-4 py-2">Sair da conta</button></div>
