@@ -4,7 +4,7 @@ import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useLocation, u
 import './index.css'
 import 'katex/dist/katex.min.css'
 import { Study, TopicPage } from './pages/Study'
-import { useProgress } from './lib/useProgress'
+import { ProgressProvider, useProgress } from './lib/useProgress'
 import { topics } from './content/topics'
 import Calculator from './pages/Calculator'
 import Notes from './pages/Notes'
@@ -42,7 +42,7 @@ function Home() {
 
     <section className="welcome-row">
       <div><p className="eyebrow">BOM TE VER POR AQUI</p><h2>Olá, {displayName} 👋</h2><p className="muted">Que tal avançar um pouco hoje?</p></div>
-      <div className="study-streak"><span>✦</span><div><strong>7 dias</strong><small>de sequência</small></div></div>
+      <div className="study-streak"><span>✦</span><div>{p.streak ? <><strong>{p.streak} {p.streak === 1 ? 'dia' : 'dias'}</strong><small>de sequência</small></> : <><strong>Comece hoje</strong><small>responda um exercício</small></>}</div></div>
     </section>
 
     <section className="stats-grid" aria-label="Resumo do seu progresso">
@@ -80,6 +80,7 @@ function AppShell() {
   const { user } = useAuth()
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Minha conta'
   const initials = displayName.slice(0, 2).toUpperCase()
+  const { syncError } = useProgress()
   const closeMenu = () => setMobileOpen(false)
   return <div className="app-shell">
     <button className="mobile-menu-button" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Abrir menu">☰</button>
@@ -88,11 +89,10 @@ function AppShell() {
       <p className="sidebar-label">MENU PRINCIPAL</p>
       <nav className="sidebar-nav">{links.map(link => <NavLink key={link.to} to={link.to} end={link.to === '/'} onClick={closeMenu} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><span className="nav-icon">{link.icon}</span>{link.label}</NavLink>)}</nav>
       <div className="sidebar-spacer" />
-      <div className="upgrade-card"><span className="upgrade-star">✦</span><strong>Desbloqueie seu potencial</strong><p>Tenha acesso a recursos para estudar ainda melhor.</p><NavLink to="/login" onClick={closeMenu}>Conhecer recursos <span>→</span></NavLink></div>
       <NavLink to="/login" onClick={closeMenu} className={`nav-item account-link ${location.pathname === '/login' ? 'active' : ''}`}><span className="avatar">{initials}</span><span><b>{displayName}</b><small>Plano gratuito</small></span><span className="account-arrow">›</span></NavLink>
     </aside>
     {mobileOpen && <button className="sidebar-overlay" onClick={closeMenu} aria-label="Fechar menu" />}
-    <main className="main-content"><header className="topbar"><div className="breadcrumb">StudyHub <span>/</span> <b>{links.find(link => link.to === location.pathname)?.label ?? 'Estudos'}</b></div><div className="topbar-actions"><button aria-label="Notificações" className="icon-button">♢<i /></button><NavLink to="/login" className="top-avatar">{initials}</NavLink></div></header><Routes>
+    <main className="main-content"><header className="topbar"><div className="breadcrumb">StudyHub <span>/</span> <b>{links.find(link => link.to === location.pathname)?.label ?? 'Estudos'}</b></div><div className="topbar-actions"><NavLink to="/login" className="top-avatar">{initials}</NavLink></div></header>{syncError && <p role="alert" className="text-red-400 text-sm mb-3">{syncError}</p>}<Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<RequireAuth />}>
         <Route path="/" element={<Home />} /><Route path="/estudos" element={<Study />} /><Route path="/estudos/:id" element={<TopicPage />} /><Route path="/biblioteca" element={<Navigate to="/estudos" replace />} /><Route path="/biblioteca/:id" element={<OldTopic />} /><Route path="/formulas" element={<Navigate to="/estudos?modo=formulas" replace />} /><Route path="/calculadora" element={<Calculator />} /><Route path="/notas" element={<Notes />} />
@@ -101,4 +101,4 @@ function AppShell() {
   </div>
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><BrowserRouter><AppShell /></BrowserRouter></React.StrictMode>)
+ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><BrowserRouter><ProgressProvider><AppShell /></ProgressProvider></BrowserRouter></React.StrictMode>)
