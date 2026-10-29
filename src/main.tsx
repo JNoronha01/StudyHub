@@ -4,65 +4,39 @@ import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useLocation, u
 import './index.css'
 import 'katex/dist/katex.min.css'
 import { Study, TopicPage } from './pages/Study'
-import { ProgressProvider, useProgress } from './lib/useProgress'
-import { topics } from './content/topics'
+import { ProgressProvider, dayKey, useProgress } from './lib/useProgress'
+import Home from './pages/Home'
 import Calculator from './pages/Calculator'
 import Notes from './pages/Notes'
 import Login from './pages/Login'
+import Simulado from './pages/Simulado'
+import Revisao, { useReviews } from './pages/Revisao'
+import Flashcards from './pages/Flashcards'
+import Plano from './pages/Plano'
+import Redacao from './pages/Redacao'
+import Planos from './pages/Planos'
 import { useAuth } from './lib/useAuth'
+import { useStats } from './lib/useStats'
 import { supabase } from './lib/supabase'
 
-const links = [
-  { to: '/', label: 'Visão geral', icon: '⌂' },
-  { to: '/estudos', label: 'Central de estudos', icon: '▣' },
-  { to: '/calculadora', label: 'Calculadora', icon: '＋' },
-  { to: '/notas', label: 'Caderno', icon: '✎' },
+const sections = [
+  { label: 'ESTUDAR', links: [
+    { to: '/', label: 'Visão geral', icon: '⌂' },
+    { to: '/estudos', label: 'Central de estudos', icon: '▣' },
+    { to: '/plano', label: 'Plano de estudos', icon: '📅' },
+  ] },
+  { label: 'PRATICAR', links: [
+    { to: '/simulado', label: 'Simulado ENEM', icon: '📝' },
+    { to: '/redacao', label: 'Redação', icon: '✍️' },
+    { to: '/revisao', label: 'Caderno de erros', icon: '🔁' },
+    { to: '/flashcards', label: 'Flashcards', icon: '🃏' },
+  ] },
+  { label: 'FERRAMENTAS', links: [
+    { to: '/calculadora', label: 'Calculadora', icon: '＋' },
+    { to: '/notas', label: 'Caderno', icon: '✎' },
+  ] },
 ]
-
-function Home() {
-  const p = useProgress()
-  const { user } = useAuth()
-  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'estudante'
-  const done = topics.filter(t => p.done[t.id]).length
-  const favs = topics.filter(t => p.fav[t.id]).length
-  const answered = Object.values(p.answers).reduce((n, a) => n + Object.keys(a).length, 0)
-  const percent = topics.length ? Math.round((done / topics.length) * 100) : 0
-  const nextTopic = topics.find(t => !p.done[t.id]) ?? topics[0]
-
-  return <div className="dashboard space-y-6">
-    <section className="hero-card">
-      <div className="hero-copy">
-        <span className="eyebrow">SEU ESPAÇO DE APRENDIZADO</span>
-        <h1>Aprenda no seu ritmo.<br /><span>Chegue mais longe.</span></h1>
-        <p>Organize sua rotina, pratique com intenção e acompanhe cada conquista.</p>
-        <NavLink to="/estudos" className="primary-button">Continuar estudando <span>→</span></NavLink>
-      </div>
-      <div className="hero-orbit" aria-hidden="true"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><div className="hero-star">✦</div></div>
-    </section>
-
-    <section className="welcome-row">
-      <div><p className="eyebrow">BOM TE VER POR AQUI</p><h2>Olá, {displayName} 👋</h2><p className="muted">Que tal avançar um pouco hoje?</p></div>
-      <div className="study-streak"><span>✦</span><div>{p.streak ? <><strong>{p.streak} {p.streak === 1 ? 'dia' : 'dias'}</strong><small>de sequência</small></> : <><strong>Comece hoje</strong><small>responda um exercício</small></>}</div></div>
-    </section>
-
-    <section className="stats-grid" aria-label="Resumo do seu progresso">
-      <div className="stat-card stat-progress"><div className="stat-icon">◔</div><div><small>Progresso geral</small><strong>{percent}%</strong></div><div className="progress-ring" style={{ '--progress': `${percent * 3.6}deg` } as React.CSSProperties}><span>{done}/{topics.length}</span></div></div>
-      <div className="stat-card"><div className="stat-icon purple">◈</div><div><small>Conteúdos vistos</small><strong>{done}</strong><span className="stat-note">de {topics.length} disponíveis</span></div></div>
-      <div className="stat-card"><div className="stat-icon orange">★</div><div><small>Favoritos</small><strong>{favs}</strong><span className="stat-note">para revisar depois</span></div></div>
-      <div className="stat-card"><div className="stat-icon green">✓</div><div><small>Exercícios</small><strong>{answered}</strong><span className="stat-note">respostas registradas</span></div></div>
-    </section>
-
-    <section className="content-grid">
-      <div className="panel next-panel"><div className="panel-heading"><div><p className="eyebrow">RECOMENDADO PARA VOCÊ</p><h2>Continue de onde parou</h2></div><NavLink to="/estudos" className="text-link">Ver tudo →</NavLink></div>
-        <NavLink to={`/estudos/${nextTopic.id}`} className="next-topic"><div className="topic-badge">{nextTopic.subject.slice(0, 1)}</div><div className="topic-info"><span>{nextTopic.subject} · {nextTopic.area}</span><strong>{nextTopic.title}</strong><small>{p.done[nextTopic.id] ? 'Revisão recomendada' : 'Próximo conteúdo sugerido'} <b>·</b> nível {nextTopic.level}</small></div><span className="topic-arrow">→</span></NavLink>
-        <div className="mini-progress"><span style={{ width: `${Math.max(percent, 8)}%` }} /></div>
-      </div>
-      <div className="panel quick-panel"><div className="panel-heading"><div><p className="eyebrow">ACESSO RÁPIDO</p><h2>Ferramentas</h2></div></div><div className="quick-actions"><NavLink to="/notas"><span className="quick-icon purple">✎</span><strong>Caderno</strong><small>Anote suas ideias</small></NavLink><NavLink to="/calculadora"><span className="quick-icon orange">＋</span><strong>Calculadora</strong><small>Resolva problemas</small></NavLink></div></div>
-    </section>
-
-    <section className="tip-card"><span className="tip-icon">✦</span><div><strong>Dica de estudo</strong><p>Estudar em sessões curtas e consistentes ajuda a fixar mais. Tente fazer 25 minutos agora.</p></div><NavLink to="/estudos" className="text-link">Começar →</NavLink></section>
-  </div>
-}
+const links = sections.flatMap(s => s.links)
 
 function OldTopic() { const { id } = useParams(); return <Navigate to={`/estudos/${id}`} replace /> }
 
@@ -81,23 +55,34 @@ function AppShell() {
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Minha conta'
   const initials = displayName.slice(0, 2).toUpperCase()
   const { syncError } = useProgress()
+  const { level } = useStats()
+  const { items } = useReviews()
+  const due = Object.values(items).filter(i => i.due <= dayKey()).length
   const closeMenu = () => setMobileOpen(false)
   return <div className="app-shell">
     <button className="mobile-menu-button" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Abrir menu">☰</button>
     <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
       <div className="brand"><span className="brand-mark">✦</span><span>Study<span>Hub</span></span></div>
-      <p className="sidebar-label">MENU PRINCIPAL</p>
-      <nav className="sidebar-nav">{links.map(link => <NavLink key={link.to} to={link.to} end={link.to === '/'} onClick={closeMenu} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><span className="nav-icon">{link.icon}</span>{link.label}</NavLink>)}</nav>
+      {sections.map(s => <div key={s.label}><p className="sidebar-label">{s.label}</p>
+        <nav className="sidebar-nav">{s.links.map(link => <NavLink key={link.to} to={link.to} end={link.to === '/'} onClick={closeMenu} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><span className="nav-icon">{link.icon}</span>{link.label}{link.to === '/revisao' && due > 0 && <span className="nav-badge">{due}</span>}</NavLink>)}</nav></div>)}
       <div className="sidebar-spacer" />
-      <NavLink to="/login" onClick={closeMenu} className={`nav-item account-link ${location.pathname === '/login' ? 'active' : ''}`}><span className="avatar">{initials}</span><span><b>{displayName}</b><small>Plano gratuito</small></span><span className="account-arrow">›</span></NavLink>
+      <div className="upgrade-card"><span className="upgrade-star">✦</span><strong>StudyHub Pro</strong><p>Correções de redação e tutor com IA ilimitados.</p><NavLink to="/planos" onClick={closeMenu}>Conhecer planos <span>→</span></NavLink></div>
+      <NavLink to="/login" onClick={closeMenu} className="nav-item account-link"><span className="avatar">{initials}</span><span><b>{displayName}</b><small>Nível {level.level} · {level.xp} XP</small></span><span className="account-arrow">›</span></NavLink>
     </aside>
     {mobileOpen && <button className="sidebar-overlay" onClick={closeMenu} aria-label="Fechar menu" />}
-    <main className="main-content"><header className="topbar"><div className="breadcrumb">StudyHub <span>/</span> <b>{links.find(link => link.to === location.pathname)?.label ?? 'Estudos'}</b></div><div className="topbar-actions"><NavLink to="/login" className="top-avatar">{initials}</NavLink></div></header>{syncError && <p role="alert" className="text-red-400 text-sm mb-3">{syncError}</p>}<Routes>
-      <Route path="/login" element={<Login />} />
-      <Route element={<RequireAuth />}>
-        <Route path="/" element={<Home />} /><Route path="/estudos" element={<Study />} /><Route path="/estudos/:id" element={<TopicPage />} /><Route path="/biblioteca" element={<Navigate to="/estudos" replace />} /><Route path="/biblioteca/:id" element={<OldTopic />} /><Route path="/formulas" element={<Navigate to="/estudos?modo=formulas" replace />} /><Route path="/calculadora" element={<Calculator />} /><Route path="/notas" element={<Notes />} />
-      </Route>
-    </Routes></main>
+    <main className="main-content">
+      <header className="topbar"><div className="breadcrumb">StudyHub <span>/</span> <b>{links.find(link => link.to === location.pathname)?.label ?? (location.pathname === '/planos' ? 'Planos' : 'Estudos')}</b></div>
+        <div className="topbar-actions">{user && <NavLink to="/" className="xp-pill" title="Seu nível"><b>{level.level}</b><span>{level.xp} XP</span></NavLink>}<NavLink to="/login" className="top-avatar">{initials}</NavLink></div></header>
+      {syncError && <p role="alert" className="text-red-400 text-sm mt-3">{syncError}</p>}
+      {/* A key muda a cada rota: o React remonta a página e a animação de entrada roda de novo. */}
+      <div key={location.pathname} className="page"><Routes>
+        <Route path="/login" element={<Login />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/" element={<Home />} /><Route path="/estudos" element={<Study />} /><Route path="/estudos/:id" element={<TopicPage />} /><Route path="/biblioteca" element={<Navigate to="/estudos" replace />} /><Route path="/biblioteca/:id" element={<OldTopic />} /><Route path="/formulas" element={<Navigate to="/estudos?modo=formulas" replace />} /><Route path="/calculadora" element={<Calculator />} /><Route path="/notas" element={<Notes />} />
+          <Route path="/simulado" element={<Simulado />} /><Route path="/redacao" element={<Redacao />} /><Route path="/revisao" element={<Revisao />} /><Route path="/flashcards" element={<Flashcards />} /><Route path="/plano" element={<Plano />} /><Route path="/planos" element={<Planos />} />
+        </Route>
+      </Routes></div>
+    </main>
   </div>
 }
 

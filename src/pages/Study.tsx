@@ -4,6 +4,7 @@ import { allSubjects, topics } from '../content/topics'
 import { formulas } from '../content/formulas'
 import Formulas from './Formulas'
 import Rich from '../lib/Rich'
+import ExplainButton from '../components/ExplainButton'
 import Tex from '../lib/Tex'
 import { useProgress } from '../lib/useProgress'
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -51,10 +52,11 @@ export function TopicPage() {
       <h2 className="font-bold">Erros comuns</h2><ul className="list-disc pl-5 space-y-1 text-slate-300">{t.mistakes.map((s, i) => <li key={i}><Rich t={s} /></li>)}</ul></div>}
     {tab === 'Fórmulas' && <div className="space-y-2">{t.formulas.map(f => <div key={f.name} className="bg-card border border-line rounded p-3"><div className="font-semibold">{f.name}</div><div className="bg-bg rounded p-2 my-1 overflow-x-auto"><Tex f={f.tex} /></div><div className="text-sm text-slate-400">{f.note}</div></div>)}
       <Link className="text-brand text-sm" to={`/estudos?modo=formulas&q=${encodeURIComponent(t.area)}`}>Ver mais fórmulas de {t.area} →</Link></div>}
-    {tab === 'Exercícios' && <div className="space-y-3"><p className="text-slate-400 text-sm">Acertos: {hits} de {t.quiz.length} · respondidas: {Object.keys(ans).length}. Suas respostas ficam salvas neste navegador.</p>
+    {tab === 'Exercícios' && <div className="space-y-3"><p className="text-slate-400 text-sm">Acertos: {hits} de {t.quiz.length} · respondidas: {Object.keys(ans).length}. Suas respostas ficam salvas na sua conta, e os erros vão para o caderno de erros.</p>
       {t.quiz.map((q, i) => <div key={i} className="bg-card border border-line rounded p-3"><p><b>{i + 1}.</b> <Rich t={q.q} /></p>
-        {q.options.map((o, j) => <button key={j} disabled={ans[i] !== undefined} onClick={() => p.answer(t.id, i, j, j === q.answer)} className={`block w-full text-left border rounded px-2 py-1 my-1 ${ans[i] === undefined ? 'border-line hover:border-brand' : j === q.answer ? 'border-green-500' : ans[i] === j ? 'border-red-500' : 'border-line'}`}><Rich t={o} /></button>)}
-        {ans[i] !== undefined && <p className="mt-1"><b>{ans[i] === q.answer ? 'Correto. ' : 'Incorreto. '}</b><Rich t={q.why} /></p>}</div>)}
+        {q.options.map((o, j) => <button key={j} disabled={ans[i] !== undefined} onClick={() => p.answer(t.id, i, j, j === q.answer)} className={`block w-full text-left border rounded px-3 py-2 my-2 transition-all ${ans[i] === undefined ? 'border-line hover:border-brand' : j === q.answer ? 'border-green-500' : ans[i] === j ? 'border-red-500' : 'border-line'}`}><Rich t={o} /></button>)}
+        {ans[i] !== undefined && <div className="page"><p className="mt-1"><b className={ans[i] === q.answer ? 'text-green-400' : 'text-red-400'}>{ans[i] === q.answer ? 'Correto. ' : 'Incorreto. '}</b><Rich t={q.why} /></p>
+          {ans[i] !== q.answer && <ExplainButton q={q} chosen={ans[i]} />}</div>}</div>)}
       {Object.keys(ans).length > 0 && <button onClick={() => p.resetAnswers(t.id)} className={chip(false)}>Refazer exercícios</button>}</div>}
   </article>
 }
