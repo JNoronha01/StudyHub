@@ -75,7 +75,7 @@ function Treinar({ draft, setDraft }: { draft: Draft; setDraft: (fn: (d: Draft) 
       <label className="eyebrow" htmlFor="tema">TEMA</label>
       <input id="tema" className="field mt-2 mb-4" value={draft.tema} onChange={e => setDraft(d => ({ ...d, tema: e.target.value }))} />
       <textarea aria-label="Sua redação" className="field leading-7" rows={22} placeholder="Escreva sua redação aqui. Separe os parágrafos com uma linha em branco." value={draft.texto} onChange={e => setDraft(d => ({ ...d, texto: e.target.value }))} />
-      <div className="flex flex-wrap gap-2 mt-3"><button className="btn" disabled={a.words < 80 || ai.loading} onClick={corrigir}>{ai.loading ? 'Corrigindo…' : '✦ Corrigir com IA'}</button><span className="text-xs text-slate-500 self-center">Rascunho salvo automaticamente neste navegador.</span></div>
+      <div className="flex flex-wrap gap-2 mt-3"><button className="btn" disabled={a.words < 80 || ai.loading} onClick={corrigir}>{ai.loading ? 'Corrigindo…' : '✦ Corrigir com IA'}</button><span className="text-xs text-slate-500 self-center">{ai.loading ? 'O corretor lê o texto inteiro e avalia as 5 competências: leva cerca de 1 minuto.' : 'Rascunho salvo automaticamente neste navegador.'}</span></div>
     </div>
     <div className="grid gap-4 content-start">
       <div className="card"><p className="eyebrow mb-3">ANÁLISE INSTANTÂNEA</p>
