@@ -21,7 +21,8 @@ O aluno respondeu uma questão e quer uma nova explicação, mais simples que a 
 Explique em português do Brasil, em no máximo 180 palavras: por que a alternativa correta está certa,
 por que a escolhida pelo aluno está errada (se ele errou) e uma dica para não errar de novo.
 Use linguagem de conversa, exemplos do dia a dia e, se houver conta, mostre o passo a passo.
-Fórmulas podem ser escritas em LaTeX entre $...$.`,
+Fórmulas podem ser escritas em LaTeX entre $...$, mas só com símbolos e números: palavras ficam fora das fórmulas
+(escreva "a área é $\\frac{b \\cdot h}{2}$", nunca "$Área = ...$"). Não use títulos nem listas em markdown.`,
   redacao: `Você é um corretor experiente da redação do ENEM e segue a matriz oficial das 5 competências.
 Avalie a redação do aluno sobre o tema informado. Seja justo, específico e encorajador, sem inflar notas.
 Responda em português do Brasil, exatamente neste formato de texto simples:
@@ -75,7 +76,8 @@ Deno.serve(async req => {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system[kind] }] },
       contents: [{ role: 'user', parts: [{ text: content }] }],
-      generationConfig: { maxOutputTokens: 8192, temperature: kind === 'redacao' ? 0.3 : 0.7 },
+      // Raciocínio "low" na redação: o padrão (medium) levava cerca de 90 s, perto do limite de 150 s da função.
+      generationConfig: { maxOutputTokens: 8192, temperature: kind === 'redacao' ? 0.3 : 0.7, ...(kind === 'redacao' && { thinkingConfig: { thinkingLevel: 'low' } }) },
     }),
   })
   if (res.status === 429) return json({ error: 'Muitos pedidos agora. Tente de novo em instantes.' }, 429)
