@@ -12,7 +12,7 @@ Plataforma de estudos para o **ENEM e vestibulares**: aulas objetivas das 12 mat
 | 📝 **Simulado ENEM** | Por área, com cronômetro de 3 min/questão, nota estimada (300–1000) que pune respostas incoerentes como a TRI, desempenho por matéria e histórico |
 | 🔁 **Caderno de erros** | Todo erro volta em 1, 3, 7 e 15 dias até ser dominado (revisão espaçada) |
 | ✍️ **Redação** | 8 aulas, redação-modelo comentada, banco de repertórios por eixo, temas oficiais 2014–2024, conectivos e editor com análise instantânea dos 5 elementos da proposta |
-| ✦ **Tutor com IA** | "Explica de novo" nas questões e correção de redação por competência (Claude, via Supabase Edge Function) |
+| ✦ **Tutor com IA** | "Explica de novo" nas questões e correção de redação por competência (Google Gemini, via Supabase Edge Function) |
 | 📅 **Plano de estudos** | Cronograma semanal até a data da prova, priorizando o que mais cai |
 | 🃏 **Flashcards** | Cartões com virada 3D a partir das fórmulas e exercícios |
 | 🏆 **Gamificação** | XP, níveis, sequência de dias e 10 medalhas |
@@ -39,14 +39,14 @@ Use a URL de **Supabase > Project Settings > API > Project URL** (formato `https
 
 ### Tutor com IA (opcional)
 
-A chave da Anthropic fica só no servidor, nunca no navegador. Com a [CLI do Supabase](https://supabase.com/docs/guides/cli):
+Crie uma chave gratuita no [Google AI Studio](https://aistudio.google.com/apikey). Ela fica só no servidor, nunca no navegador. Com a [CLI do Supabase](https://supabase.com/docs/guides/cli):
 
 ```bash
-supabase secrets set ANTHROPIC_API_KEY=sua-chave
+supabase secrets set GEMINI_API_KEY=sua-chave
 supabase functions deploy tutor
 ```
 
-O plano gratuito tem 3 correções de redação e 30 explicações por mês (tabela `ai_usage`); os limites ficam em `supabase/functions/tutor/index.ts`.
+O plano gratuito tem 3 correções de redação e 30 explicações por mês (tabela `ai_usage`); os limites e os modelos ficam em `supabase/functions/tutor/index.ts`. No nível gratuito do Gemini, o Google pode usar os dados enviados para melhorar os produtos dele; antes de ter alunos pagantes, ative o faturamento na chave para sair desse uso.
 
 ### Contas de teste
 

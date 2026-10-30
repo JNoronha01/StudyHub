@@ -1,7 +1,6 @@
 // Tutor com IA do StudyHub (Supabase Edge Function, Deno).
-// A chave da Anthropic fica só aqui, nos secrets do Supabase: nunca vai para o navegador.
-// Deploy:  supabase secrets set ANTHROPIC_API_KEY=...   e   supabase functions deploy tutor
-import Anthropic from 'npm:@anthropic-ai/sdk'
+// A chave do Gemini fica só aqui, nos secrets do Supabase: nunca vai para o navegador.
+// Deploy:  supabase secrets set GEMINI_API_KEY=...   e   supabase functions deploy tutor
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 // Limite mensal do plano gratuito, por tipo de pedido. Ajuste quando o plano Pro existir.
@@ -11,7 +10,10 @@ type Kind = keyof typeof LIMITS
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 
-const anthropic = new Anthropic() // lê ANTHROPIC_API_KEY do ambiente
+// Um modelo por tipo: o limite gratuito do Gemini é por modelo, então dividir também espalha a cota.
+// Lite para explicações curtas; o Flash, mais capaz, para corrigir redação.
+const MODELS: Record<Kind, string> = { explicar: 'gemini-3.5-flash-lite', redacao: 'gemini-3.8-flash' }
+const GEMINI_URL = (model: string) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
 
 const system: Record<Kind, string> = {
   explicar: `Você é um professor brasileiro de cursinho pré-vestibular, paciente e didático.
@@ -66,24 +68,26 @@ Deno.serve(async req => {
     ? `Questão: ${clip(body.question, 1500)}\nAlternativas:\n${(Array.isArray(body.options) ? body.options : []).map((o: unknown, i: number) => `${String.fromCharCode(65 + i)}) ${clip(o, 300)}`).join('\n')}\nCorreta: ${clip(body.correct, 300)}\nResposta do aluno: ${clip(body.chosen, 300)}\nExplicação do gabarito: ${clip(body.why, 1000)}`
     : `Tema: ${clip(body.tema, 300)}\n\nRedação do aluno:\n${clip(body.texto, 7000)}`
 
-  try {
-    const response = await anthropic.beta.messages.create({
-      model: 'claude-opus-5-5',
-      max_tokens: 16000,
-      // Se o modelo recusar por política, a API tenta outro modelo automaticamente na mesma chamada.
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      output_config: { effort: kind === 'redacao' ? 'high' : 'low' },
-      system: system[kind],
-      messages: [{ role: 'user', content }],
-    })
-    if (response.stop_reason === 'refusal') return json({ error: 'O tutor não conseguiu responder a esse conteúdo.' }, 422)
-    const text = response.content.flatMap(b => (b.type === 'text' ? [b.text] : [])).join('\n').trim()
-    await supabase.from('ai_usage').insert({ kind })
-    return json({ text, remaining: LIMITS[kind] - (count ?? 0) - 1 })
-  } catch (error) {
-    if (error instanceof Anthropic.RateLimitError) return json({ error: 'Muitos pedidos agora. Tente de novo em instantes.' }, 429)
-    if (error instanceof Anthropic.APIError) return json({ error: 'O tutor está indisponível no momento.' }, 502)
-    throw error
-  }
+  const res = await fetch(GEMINI_URL(MODELS[kind]), {
+    method: 'POST',
+    // A chave vai no cabeçalho, não na URL, para não aparecer em logs.
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': Deno.env.get('GEMINI_API_KEY') ?? '' },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system[kind] }] },
+      contents: [{ role: 'user', parts: [{ text: content }] }],
+      generationConfig: { maxOutputTokens: 8192, temperature: kind === 'redacao' ? 0.3 : 0.7 },
+    }),
+  })
+  if (res.status === 429) return json({ error: 'Muitos pedidos agora. Tente de novo em instantes.' }, 429)
+  if (!res.ok) { console.error('gemini', res.status, await res.text()); return json({ error: 'O tutor está indisponível no momento.' }, 502) }
+
+  const data = await res.json()
+  const candidate = data.candidates?.[0]
+  // Bloqueio por segurança pode vir no pedido (promptFeedback) ou na resposta (finishReason).
+  if (data.promptFeedback?.blockReason || ['SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST'].includes(candidate?.finishReason)) return json({ error: 'O tutor não conseguiu responder a esse conteúdo.' }, 422)
+  // Partes marcadas como "thought" são o raciocínio interno do modelo, não a resposta.
+  const text = (candidate?.content?.parts ?? []).filter((p: { thought?: boolean }) => !p.thought).map((p: { text?: string }) => p.text ?? '').join('').trim()
+  if (!text) return json({ error: 'O tutor está indisponível no momento.' }, 502)
+  await supabase.from('ai_usage').insert({ kind })
+  return json({ text, remaining: LIMITS[kind] - (count ?? 0) - 1 })
 })
