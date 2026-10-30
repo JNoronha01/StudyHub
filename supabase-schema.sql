@@ -36,3 +36,18 @@ create policy "own notes" on notes for all using (user_id = auth.uid()) with che
 create policy "own progress" on progress for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "own tasks" on tasks for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "own attempts" on attempts for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- Tutor com IA: registra cada uso para aplicar o limite mensal do plano gratuito.
+create table if not exists ai_usage (id uuid primary key default gen_random_uuid(), user_id uuid not null default auth.uid() references auth.users on delete cascade, kind text not null check (kind in ('explicar', 'redacao')), created_at timestamptz not null default now());
+create index if not exists ai_usage_user_kind_idx on ai_usage (user_id, kind, created_at);
+alter table ai_usage enable row level security;
+drop policy if exists "own ai usage read" on ai_usage;
+drop policy if exists "own ai usage insert" on ai_usage;
+create policy "own ai usage read" on ai_usage for select using (user_id = auth.uid());
+create policy "own ai usage insert" on ai_usage for insert with check (user_id = auth.uid());
+
+-- Lista de espera do plano Pro: valida a demanda antes de construir a cobrança.
+create table if not exists waitlist (user_id uuid primary key default auth.uid() references auth.users on delete cascade, email text not null, plan text not null default 'pro', created_at timestamptz not null default now());
+alter table waitlist enable row level security;
+drop policy if exists "own waitlist" on waitlist;
+create policy "own waitlist" on waitlist for all using (user_id = auth.uid()) with check (user_id = auth.uid());

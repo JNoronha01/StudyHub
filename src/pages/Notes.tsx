@@ -4,7 +4,7 @@ import { hasSupabase } from '../lib/supabase'
 import { useAuth } from '../lib/useAuth'
 export default function Notes() {
   const { user } = useAuth()
-  const { notes, loading, error, add, update, remove } = useNotes(); const [sel, setSel] = useState<string>(''); const [q, setQ] = useState('')
+  const { notes, loading, error, status, add, update, remove } = useNotes(); const [sel, setSel] = useState<string>(''); const [q, setQ] = useState('')
   const list = notes.filter(n => (n.title + n.body).toLowerCase().includes(q.toLowerCase())).sort((a, b) => Number(b.pinned) - Number(a.pinned))
   const n = notes.find(x => x.id === sel) ?? list[0]
   return <div className="grid md:grid-cols-[260px_1fr] gap-4">
@@ -17,7 +17,8 @@ export default function Notes() {
       {loading ? <p>Carregando…</p> : list.map(x => <button key={x.id} onClick={() => setSel(x.id)} className="block w-full text-left bg-card border border-line rounded p-2 mb-1">{x.pinned && '📌 '}{x.favorite && '★ '}{x.title || 'Sem título'}</button>)}</div>
     {n && <div className="bg-card border border-line rounded p-4">
       <input aria-label="Título" value={n.title} onChange={e => update(n.id, { title: e.target.value })} className="w-full bg-transparent text-xl font-bold mb-2" />
-      <div className="flex gap-2 mb-2"><button onClick={() => update(n.id, { pinned: !n.pinned })}>{n.pinned ? 'Desafixar' : 'Fixar'}</button><button onClick={() => update(n.id, { favorite: !n.favorite })}>{n.favorite ? '★' : '☆'}</button><button onClick={() => confirm('Excluir?') && remove(n.id)}>Excluir</button></div>
+      <div className="flex gap-2 mb-2"><button onClick={() => update(n.id, { pinned: !n.pinned })}>{n.pinned ? 'Desafixar' : 'Fixar'}</button><button onClick={() => update(n.id, { favorite: !n.favorite })}>{n.favorite ? '★' : '☆'}</button><button onClick={() => confirm('Excluir?') && remove(n.id)}>Excluir</button>
+        <span role="status" className="ml-auto text-sm text-slate-400">{status === 'pending' || status === 'saving' ? 'Salvando…' : status === 'saved' ? 'Salvo ✓' : ''}</span></div>
       <textarea aria-label="Texto" rows={16} value={n.body} onChange={e => update(n.id, { body: e.target.value })} className="w-full bg-bg border border-line rounded p-2" /></div>}
   </div>
 }
