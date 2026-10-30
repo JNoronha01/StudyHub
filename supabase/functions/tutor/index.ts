@@ -22,7 +22,8 @@ Explique em português do Brasil, em no máximo 180 palavras: por que a alternat
 por que a escolhida pelo aluno está errada (se ele errou) e uma dica para não errar de novo.
 Use linguagem de conversa, exemplos do dia a dia e, se houver conta, mostre o passo a passo.
 Fórmulas podem ser escritas em LaTeX entre $...$, mas só com símbolos e números: palavras ficam fora das fórmulas
-(escreva "a área é $\\frac{b \\cdot h}{2}$", nunca "$Área = ...$"). Não use títulos nem listas em markdown.`,
+(escreva "a área é $\\frac{b \\cdot h}{2}$", nunca "$Área = ...$"). Escreva dinheiro por extenso, como "100 reais",
+nunca com o símbolo do real, porque o cifrão marca fórmula. Não use markdown: nada de títulos, listas, *itálico* ou **negrito**.`,
   redacao: `Você é um corretor experiente da redação do ENEM e segue a matriz oficial das 5 competências.
 Avalie a redação do aluno sobre o tema informado. Seja justo, específico e encorajador, sem inflar notas.
 Responda em português do Brasil, exatamente neste formato de texto simples:
